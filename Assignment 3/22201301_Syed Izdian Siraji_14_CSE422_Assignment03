@@ -1,0 +1,209 @@
+#TASK 1
+import random
+import math
+def strength_calc(strngth_val):
+    
+    log_cal = math.log2(strngth_val+1)
+    f_val = log_cal + (strngth_val/10)
+    
+    return f_val
+
+def utility(maxplayer_strngth,minplayer_strngth):
+    
+    r_sign = random.choice([-1,1])
+    r_num = random.uniform(1,10)
+
+    utility_val = (strength_calc(maxplayer_strngth) - strength_calc(minplayer_strngth)) + (r_sign*(r_num/10))
+
+    return utility_val
+
+def alpha_beta(depth,maxdepth,maxplayer,maxplayer_strngth,minplayer_strngth,alpha=float('-inf'),beta=float('inf')):
+    
+    if depth == maxdepth:
+        return utility(maxplayer_strngth,minplayer_strngth)
+    
+    
+    if maxplayer:
+        finalvalue = float('-inf')
+        for i in range(2):
+            value = alpha_beta(depth+1,maxdepth,False,maxplayer_strngth,minplayer_strngth,alpha,beta)
+            finalvalue = max(finalvalue,value)
+            alpha = max(alpha,finalvalue)
+            if beta <= alpha:
+                break
+        return finalvalue
+    else:
+        finalvalue = float('inf')
+        for i in range(2):
+            value = alpha_beta(depth+1,maxdepth,True,maxplayer_strngth,minplayer_strngth,alpha,beta)
+            finalvalue = min(finalvalue,value)
+            beta = min(beta,finalvalue)
+            if beta <= alpha:
+                break
+        return finalvalue
+    
+    
+def chess_game(starting_player,pl1_strength,pl2_strength):
+    
+    max_depth = 5
+    max_games = 4
+    
+    winners = []
+    pl1_count = 0
+    pl2_count = 0
+    draw_count = 0
+    game = 0
+    
+    while game < max_games:
+        
+        if starting_player == 0:
+            max_player = True
+        else :
+            max_player = False
+            
+        if max_player:
+            maxplayer_strn = pl1_strength
+            minplayer_strn = pl2_strength
+        else:
+            maxplayer_strn = pl2_strength
+            minplayer_strn = pl1_strength           
+        
+        final_val = alpha_beta(0,max_depth,True, maxplayer_strn,minplayer_strn) 
+        
+        if final_val > 0:
+            if max_player:
+                pl1_count+=1
+                winners.append((game+1,"Magnus Carlsen (max)",final_val))
+                
+            else:
+                pl2_count+=1
+                winners.append((game+1,"Fabiano Caruana (max)",final_val))
+                
+        elif final_val < 0:
+            if max_player:
+                pl2_count+=1
+                winners.append((game+1,"Fabiano Caruana (min) ",final_val))
+            else:
+                pl1_count+=1
+                winners.append((game+1,"Magnus Carlsen (min)", final_val))     
+        else:
+            draw_count+=1
+            winners.append((game+1,"Draw",final_val))
+            
+        if starting_player == 0:
+            starting_player = 1                       
+        else:
+            starting_player = 0 
+        game+=1
+        
+    for i,j,k in winners:
+        print(f"Game {i} winner : {j} (Utility value : {k:.2f})")
+        
+        
+    if pl1_count>pl2_count:
+        overall_win = "Magnus Carlsen"
+    elif pl1_count<pl2_count:
+        overall_win = "Fabiano Caruana" 
+    else:
+        overall_win = "Draw"    
+    return overall_win,pl1_count,pl2_count,draw_count       
+
+
+starting_player = int(input("Enter starting player for game 1 (0 for Carlsen, 1 for Caruana) : "))
+pl1_strength = float(input("Enter  base strength for Carlsen : "))
+pl2_strength = float(input("Enter  base strength for Caruana : "))
+
+ov_win,count1,count2,d_count=chess_game(starting_player,pl1_strength,pl2_strength) 
+
+print(f"Overall Results:")
+print(f"Magnus Carlsen Wins : {count1}\nFabiano Caruana Wins : {count2}\nDraws : {d_count}\nOverall Winner : {ov_win}")       
+
+
+
+#TASK 2
+def minimax_with_mindcontrol(depth,maxdepth,maxplayer,maxval,minval,alpha=float('-inf'),beta=float('inf')):
+    
+    if depth == maxdepth:
+        return utility(maxval,minval)
+    
+    
+    if maxplayer:
+        finalvalue = float('-inf')
+        for i in range(2):
+            value = minimax_with_mindcontrol(depth+1,maxdepth,False,maxval,minval,alpha,beta)
+            finalvalue = max(finalvalue,value)
+            alpha = max(alpha,finalvalue)
+            if beta <= alpha:
+                break
+        return finalvalue
+    
+    else:
+        finalvalue = float('-inf')
+        for i in range(2):
+            value = minimax_with_mindcontrol(depth+1,maxdepth,False,maxval,minval,alpha,beta)
+            finalvalue = max(finalvalue,value)
+        return finalvalue      
+        
+def minimax_without_mindcontrol(depth,maxdepth,maxplayer,maxval,minval,alpha=float('-inf'),beta=float('inf')):
+    
+    if depth == maxdepth:
+        return utility(maxval,minval)
+    
+    
+    if maxplayer:
+        finalvalue = float('-inf')
+        for i in range(2):
+            value = minimax_without_mindcontrol(depth+1,maxdepth,False,maxval,minval,alpha,beta)
+            finalvalue =max(finalvalue,value)
+            alpha = max(alpha,finalvalue)
+            if beta <= alpha:
+                break
+        return finalvalue
+    else:
+        finalvalue = float('inf')
+        for i in range(2):
+            value = minimax_without_mindcontrol(depth+1,maxdepth,True,maxval,minval,alpha,beta)
+            finalvalue = min(finalvalue,value)
+            beta = min(beta,finalvalue)
+            if beta <= alpha:
+                break
+        return finalvalue
+
+def magicChess(firstplayer,cost,light_strn,l_strn):
+    
+    max_depth = 5
+    
+    if firstplayer == 0:
+        max_strn,min_strn,max_player = light_strn,l_strn,"Light"
+          
+    else:
+        max_strn,min_strn,max_player = l_strn,light_strn,"L"
+        
+        
+    minimaxval_withoutmindcontrol =  minimax_without_mindcontrol(0,max_depth,True,max_strn,min_strn) 
+        
+    minimaxval_withmindcontrol = minimax_with_mindcontrol(0,max_depth,True,max_strn,min_strn)
+    
+    val_after_cost = minimaxval_withmindcontrol - cost
+    
+    print(f"Minimax value without Mind Control : {minimaxval_withoutmindcontrol:.2f}\nMinimax value with Mind Control : {minimaxval_withmindcontrol:.2f}\nMinimax value with Mind Control after incurring the cost : {val_after_cost:.2f}\n")
+    
+    if minimaxval_withoutmindcontrol > 0:
+        if val_after_cost > 0:
+            print(f"{max_player} should NOT use Mind Control as the position is already winning.")
+        else:
+            print(f"{max_player} should NOT use Mind Control as it backfires.")
+            
+    elif  minimaxval_withoutmindcontrol < 0:
+        if val_after_cost > 0:
+            print(f"{max_player} should use Mind Control.")
+            
+        else:
+            print(f"{max_player}  should Not use Mind Control as the position is losing either way.")                
+        
+first_player = int(input("Enter who goes first (0 for Light, 1 for L) : "))
+mc_cost = float(input("Enter the cost of using Mind Control : "))
+base_strn_light = float(input("Enter base strength for Light : "))
+base_strn_l = float(input(" Enter base strength for L : "))
+
+magicChess(first_player,mc_cost,base_strn_light,base_strn_l)
