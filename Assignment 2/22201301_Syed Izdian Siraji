@@ -1,0 +1,172 @@
+import random
+
+def mutation(gen_offsprings,rate):
+    mutated_lst = []
+    
+    for e in gen_offsprings:
+        s_loss = int(e[:2])
+        t_profit = int(e[2:4])
+        tr_size = int(e[4:])
+
+        if random.random() < rate:
+            x = random.choice([s_loss, t_profit, tr_size])
+            if x == s_loss:
+                s_loss = random.randint(1,99)
+            elif x == t_profit:
+                t_profit = random.randint(1,99)
+                
+            elif x == tr_size:
+                tr_size = random.randint(1,99) 
+                
+        new_mchromo = generate_chromosome(s_loss,t_profit,tr_size)
+        mutated_lst.append(new_mchromo)
+    return mutated_lst                   
+                 
+
+def crossover(parent_chr):
+    
+    x = random.randint(1,5)
+    n_parent1x,n_parent1y = parent_chr[0][ : x],parent_chr[0][x : ]
+    n_parent2x,n_parent2y = parent_chr[1][ : x],parent_chr[1][x : ]
+    
+    gen_offspring1 = n_parent1x + n_parent2y
+    gen_offspring2 = n_parent2x + n_parent1y
+    
+    gen_offsprings = [gen_offspring1,gen_offspring2]
+    
+    return gen_offsprings
+
+def calc_fitness(capital,chr,pc_changes):
+    
+    
+    s_loss = int(chr[ : 2])
+    t_profit = int(chr[2 : 4])
+    tr_size = int(chr[4 : ])
+    n_capital = capital    
+    
+    for k in pc_changes:
+        invested_amount = n_capital * (tr_size / 100)
+        n_capital -= invested_amount 
+        if k > -(s_loss) and k < t_profit:
+            invested_amount += (invested_amount * k) / 100
+        else:
+            if k < 0:
+                invested_amount += (invested_amount * k) / 100
+            else:
+                invested_amount += (invested_amount * k) / 100
+        n_capital = n_capital + invested_amount
+
+    return n_capital - capital
+
+
+def encoded_chr(chr):
+    encoded_chr = ''
+    
+    for i, j in chr.items():
+        if len(str(j)) == 2:
+            encoded_chr += str(j)
+        else:
+            encoded_chr += '0' + str(j)
+
+    return encoded_chr 
+
+
+def generate_chromosome(s_loss,t_profit,tr_size):
+    chr_dict = {'stop_loss' : s_loss, 'take_profit' : t_profit, 'trade_size' : tr_size}
+    
+    return chr_dict
+
+
+def generate_population(f_pop,size):
+    
+    for e in range(size):
+        s_loss = random.randint(1,99)
+        t_profit = random.randint(1,99)
+        tr_size = random.randint(1,99)
+        f_pop.append(generate_chromosome(s_loss,t_profit,tr_size))
+    return f_pop    
+
+def genetic_algo(capital,pc_changes,generation,size,mutation_rate):
+    count = 0
+    high_profit = 0
+    chr_sequence  = ''
+    population_list = generate_population([],size)
+    new_popu_lst=[]
+    for i in population_list:
+        new_popu_lst.append(encoded_chr(i))
+    while count < generation:
+       
+        best_sequence = {}
+        h_profit = 0
+        select_parents = []
+       
+        for chr in population_list:
+            s_chr = encoded_chr(chr)
+            h_profit = calc_fitness(capital,s_chr,pc_changes)
+            if h_profit > high_profit:
+                high_profit = h_profit
+                chr_sequence = s_chr
+            best_sequence[h_profit] = s_chr
+        
+        chr_lst = list((best_sequence.values()))
+        
+        n_popu = []
+        
+        while len(n_popu) < size:
+            if len(chr_lst) >= 2:
+                select_parents = random.sample(chr_lst,2)
+                
+                cross_offspring = crossover(select_parents) 
+                
+                mutated_offsprings = mutation(cross_offspring, mutation_rate)
+                
+                for os in mutated_offsprings:
+                    os_st = encoded_chr(os)
+                    
+                    s_loss = int(os_st[ : 2])
+                    t_profit = int(os_st[2 : 4])
+                    tr_size = int(os_st[4 : ])
+                    n_chromo = generate_chromosome(s_loss, t_profit, tr_size)
+                    n_popu.append(n_chromo)
+                
+        population_list = n_popu 
+
+        count+=1
+        
+    loss = int(chr_sequence[ : 2])
+    profit = int(chr_sequence[2 : 4])
+    trade =  int(chr_sequence[4 : ])
+    res_chromo = generate_chromosome(loss, profit, trade)
+    print(f'Best Strategy:')
+    print(f'{res_chromo}')
+    print(f' Final Profit : {high_profit}')
+    
+    return new_popu_lst
+
+in_capital = 1000
+hs_pc_mv = [-1.2, 3.4, -0.8, 2.1, -2.5, 1.7, -0.3, 5.8, -1.1, 3.5]
+generations = 20
+size =4
+mutation_rate = 0.05
+res = genetic_algo(in_capital,hs_pc_mv,generations,size,mutation_rate)
+
+
+#Task2     
+n_select_parents = random.sample(res,2)
+
+def new_crossover(parent_lst):
+    x = random.randint(1,len(parent_lst[0])-2)
+    y = random.randint(x+1,len(parent_lst[0])-1)
+    
+    n_parent1x,n_parent1y,n_parent1z = parent_lst[0][:x],parent_lst[0][x:y:],parent_lst[0][y:]
+    n_parent2x,n_parent2y,n_parent2z = parent_lst[1][:x],parent_lst[1][x:y:],parent_lst[1][y:]
+ 
+    n_genoffspring1 =  n_parent1x + n_parent2y + n_parent1z
+    n_genoffspring2 =  n_parent2x + n_parent1y + n_parent2z
+
+    new_genoffspring = [n_genoffspring1,n_genoffspring2]
+    return new_genoffspring
+  
+twopoint_cross_offspring = new_crossover(n_select_parents)
+print(f'Resultant offsprings for two point crossover:')
+print(f'{twopoint_cross_offspring[0]},{twopoint_cross_offspring[1]}')
